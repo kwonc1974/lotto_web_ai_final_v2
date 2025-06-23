@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 통합 로또 추천기</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f3f3;
+      text-align: center;
+      padding: 30px 10px;
+    }
+    h1 {
+      font-size: 2.2em;
+    }
+    .marquee {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #e06666;
+      overflow: hidden;
+      white-space: nowrap;
+      box-sizing: border-box;
+      animation: marquee 7s linear infinite;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    select, button {
+      font-size: 16px;
+      padding: 10px 15px;
+      margin: 5px;
+    }
+    .button-group {
+      margin-top: 10px;
+    }
+    .result {
+      margin-top: 20px;
+    }
+    .row {
+      margin: 10px 0;
+    }
+    .ball {
+      display: inline-block;
+      width: 42px;
+      height: 42px;
+      line-height: 42px;
+      border-radius: 50%;
+      margin: 5px;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .yellow { background: #f6c542; color: black; }
+    .blue { background: #5b9bd5; }
+    .red { background: #e06666; }
+    .gray { background: #666; }
+    .green { background: #93c47d; color: black; }
+
+    @media (max-width: 600px) {
+      .ball {
+        width: 36px;
+        height: 36px;
+        line-height: 36px;
+        font-size: 16px;
+      }
+    }
+
+    .info {
+      font-size: 1em;
+      margin-top: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="marquee">당신의 로또 1등 당첨을 진심으로 축하 드립니다.</div>
+  <h1>🎯 AI 통합 로또 추천기</h1>
+
+  <label>하이브리드 추천 수: 
+    <select id="hybrid-count"></select>
+  </label>
+  <label>스마트 추천 수: 
+    <select id="smart-count"></select>
+  </label>
+
+  <div class="button-group">
+    <button onclick="generate()">로또번호받기</button>
+    <button onclick="reset()">로또번호초기화</button>
+    <button onclick="location.href='/result'">당첨번호조회</button>
+  </div>
+
+  <div class="result" id="result"></div>
+  <div class="info" id="draw-info"></div>
+
+  <script>
+    const hybridSelect = document.getElementById('hybrid-count');
+    const smartSelect = document.getElementById('smart-count');
+    const drawInfoDiv = document.getElementById('draw-info');
+
+    for (let i = 0; i <= 5; i++) {
+      const hOption = document.createElement('option');
+      hOption.value = i;
+      hOption.textContent = `${i} 게임`;
+      hybridSelect.appendChild(hOption);
+
+      const sOption = document.createElement('option');
+      sOption.value = i;
+      sOption.textContent = `${i} 게임`;
+      smartSelect.appendChild(sOption);
+    }
+
+    hybridSelect.value = "0";
+    smartSelect.value = "0";
+
+    function getColorClass(num) {
+      if (num <= 10) return 'yellow';
+      if (num <= 20) return 'blue';
+      if (num <= 30) return 'red';
+      if (num <= 40) return 'gray';
+      return 'green';
+    }
+
+    function generate() {
+      const hybridCount = parseInt(hybridSelect.value);
+      const smartCount = parseInt(smartSelect.value);
+      const total = hybridCount + smartCount;
+
+      if (total > 10) {
+        alert("총 추천 수는 최대 10게임까지만 가능합니다.");
+        return;
+      }
+
+      fetch(`/generate?hybrid=${hybridCount}&smart=${smartCount}`)
+        .then(res => res.json())
+        .then(data => {
+          const resultDiv = document.getElementById('result');
+          resultDiv.innerHTML = '';
+          data.forEach(line => {
+            const row = document.createElement('div');
+            row.className = 'row';
+            line.forEach(num => {
+              const span = document.createElement('span');
+              span.className = `ball ${getColorClass(num)}`;
+              span.textContent = num;
+              row.appendChild(span);
+            });
+            resultDiv.appendChild(row);
+          });
+          drawInfoDiv.textContent = `최신 회차 기준 추천 (${new Date().toISOString().slice(0,10)})`;
+        });
+    }
+
+    function reset() {
+      document.getElementById('result').innerHTML = '';
+      drawInfoDiv.innerHTML = '';
+      hybridSelect.value = "0";
+      smartSelect.value = "0";
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+

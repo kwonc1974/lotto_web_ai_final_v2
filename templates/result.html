@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>당첨 결과 확인</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background: #f3f3f3;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin: 20px 0;
+    }
+    .winning-box {
+      background: #4472c4;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 20px;
+      min-width: 320px;
+    }
+    .ball {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      border-radius: 50%;
+      margin: 3px;
+      font-weight: bold;
+      color: white;
+    }
+    .yellow { background: #f6c542; color: black; }
+    .blue { background: #5b9bd5; }
+    .red { background: #e06666; }
+    .gray { background: #666; }
+    .green { background: #93c47d; color: black; }
+    table {
+      width: 90%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px;
+    }
+    th {
+      background: #eee;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 15px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>당첨 결과 확인</h1>
+
+  {% if win_info and win_info.numbers %}
+  <div class="winning-box">
+    <div><strong>{{ win_info.round }}회 ({{ win_info.date }}) 당첨결과</strong></div>
+    <div>
+      {% for n in win_info.numbers.split(',') %}
+        <span class="ball 
+          {% if n|int <= 10 %}yellow
+          {% elif n|int <= 20 %}blue
+          {% elif n|int <= 30 %}red
+          {% elif n|int <= 40 %}gray
+          {% else %}green{% endif %}">{{ n }}</span>
+      {% endfor %}
+      보너스: <span class="ball red">{{ win_info.bonus }}</span>
+    </div>
+  </div>
+  {% else %}
+  <p>당첨번호 정보가 없습니다.</p>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>추천 날짜</th>
+        <th>추천 번호</th>
+        <th>등수</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in results %}
+      <tr>
+        <td>추천 #{{ loop.index }}</td>
+        <td>{{ r.date }}</td>
+        <td>{{ r.numbers }}</td>
+        <td>{{ r.grade }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div>
+    <button onclick="location.href='/'">추천 페이지로 돌아가기</button>
+    <button onclick="resetWithPassword()">DB 초기화</button>
+  </div>
+
+  <script>
+    function resetWithPassword() {
+      const pw = prompt("DB 초기화 비밀번호를 입력하세요:");
+      if (pw === null) return;  // 취소 시
+      fetch(`/reset_db?pw=${encodeURIComponent(pw)}`)
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          if (data.success) location.reload();
+        });
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

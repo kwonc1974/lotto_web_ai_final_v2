@@ -68,7 +68,7 @@ def insert_winning_number(round_num, date, numbers, bonus, total_prize, winner_c
     c = conn.cursor()
     c.execute('''
         INSERT OR REPLACE INTO winning_numbers
-        (round, date, numbers, bonus, total_prize, winner_count, per_person)
+        (round, date, numbers, bonus_number, total_prize, winner_count, per_person)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ''', (round_num, date, numbers, bonus, total_prize, winner_count, per_person))
     conn.commit()
@@ -113,6 +113,7 @@ def get_recent_winning_numbers(limit=10):
         [int(n) for n in row[0].split(',')]
         for row in rows
     ]
+
 
 
 

@@ -34,6 +34,10 @@ def get_recommendations():
     bonus_number = int(latest_winning['bonus']) if latest_winning else None
     cutoff_time = datetime.time(21, 0)
 
+    # 이번 주 기준 일요일 21시 계산
+    this_week_sunday_21 = (today - datetime.timedelta(days=today.weekday() + 1))
+    this_week_sunday_21 = this_week_sunday_21.replace(hour=21, minute=0, second=0, microsecond=0)
+
     for row in rows:
         rec_id, round_num, date_str, numbers_str, grade = row
         rec_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
@@ -43,6 +47,10 @@ def get_recommendations():
             grade = '미추첨'
         elif today < datetime.datetime.combine(winning_date.date(), cutoff_time):
             grade = '미추첨'
+        elif today.weekday() == 6 and today.time() >= cutoff_time:  # 일요일 21시 이후
+            grade = '미추첨'  # 등수 판단 안함
+        elif today > this_week_sunday_21:  # 월~토 이후, 이미 일요일 21시 지나면
+            grade = '미추첨'  # 새 회차를 향하는 추천은 항상 미추첨으로 유지
         else:
             match_count = len(set(rec_numbers) & set(winning_numbers))
             has_bonus = bonus_number in rec_numbers

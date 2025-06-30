@@ -10,7 +10,7 @@ def save_recommendation(numbers):
         INSERT INTO recommendations (round, date, numbers, grade)
         VALUES (?, ?, ?, ?)
     ''', (
-        get_latest_round(),
+        get_latest_round() + 1,
         datetime.date.today().isoformat(),
         ','.join(map(str, numbers)),
         '미추첨'
@@ -39,8 +39,9 @@ def get_recommendations():
         rec_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
         rec_numbers = list(map(int, numbers_str.split(',')))
 
-        # 기준: 추첨일 전이거나 토요일 21시 이전이면 '미추첨'
-        if winning_date and today < datetime.datetime.combine(winning_date.date(), cutoff_time):
+        if not winning_date:
+            grade = '미추첨'
+        elif today < datetime.datetime.combine(winning_date.date(), cutoff_time):
             grade = '미추첨'
         else:
             match_count = len(set(rec_numbers) & set(winning_numbers))

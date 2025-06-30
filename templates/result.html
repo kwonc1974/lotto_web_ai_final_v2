@@ -109,7 +109,7 @@
   <script>
     function resetWithPassword() {
       const pw = prompt("DB 초기화 비밀번호를 입력하세요:");
-      if (pw === null) return;  // 취소 시
+      if (pw === null) return;
       fetch(`/reset_db?pw=${encodeURIComponent(pw)}`)
         .then(res => res.json())
         .then(data => {
@@ -120,6 +120,7 @@
   </script>
 </body>
 </html>
+
 
 
 

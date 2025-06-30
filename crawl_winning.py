@@ -27,24 +27,34 @@ def crawl_latest_winning():
         round_text = driver.find_element(By.CSS_SELECTOR, "div.win_result h4 strong").text
         round_num = int(re.search(r'\d+', round_text).group())
 
+        # ✅ 1등 번호 (6개)
         num_tags = driver.find_elements(By.CSS_SELECTOR, "div.num.win span")
-        numbers = [int(tag.text) for tag in num_tags]
+        main_numbers = [int(tag.text.strip()) for tag in num_tags if tag.text.strip().isdigit()]
 
-        if len(numbers) < 7:
-            print("❌ 번호 크롤링 실패: 번호 개수가 부족합니다.")
+        # ✅ 보너스 번호 따로
+        bonus_tag = driver.find_element(By.CSS_SELECTOR, "div.num.bonus span")
+        bonus = int(bonus_tag.text.strip())
+
+        # 디버깅 로그
+        print(f"📋 1등 번호 개수: {len(main_numbers)}")
+        print(f"🎯 1등 번호: {main_numbers}")
+        print(f"🎯 보너스 번호: {bonus}")
+
+        if len(main_numbers) != 6:
+            print("❌ 번호 크롤링 실패: 1등 번호가 6개가 아닙니다.")
             return
 
-        main_numbers = numbers[:6]
-        bonus = numbers[6]
-
+        # 추첨일
         date_text = driver.find_element(By.CSS_SELECTOR, "div.win_result p.desc").text
         date = date_text.split('(')[0].strip()
 
+        # 총당첨금/인원/1인당
         tds = driver.find_elements(By.CSS_SELECTOR, "table.tbl_data tbody tr td")
         total_prize = int(tds[1].text.replace(',', '').replace('원', '').strip())
         winner_count = int(tds[2].text.replace(',', '').replace('명', '').strip())
         per_person = int(tds[3].text.replace(',', '').replace('원', '').strip())
 
+        # ✅ DB 저장
         insert_winning_number(
             round_num,
             date,
@@ -54,7 +64,8 @@ def crawl_latest_winning():
             winner_count,
             per_person
         )
-        print(f"{round_num}회 당첨번호 DB 입력 완료!")
+
+        print(f"✅ {round_num}회 당첨번호 DB 입력 완료!")
 
     except Exception as e:
         print(f"❌ 크롤링 중 에러 발생: {e}")
@@ -64,10 +75,6 @@ def crawl_latest_winning():
 
 if __name__ == '__main__':
     crawl_latest_winning()
-
-
-
-
 
 
 

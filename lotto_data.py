@@ -13,7 +13,7 @@ def save_recommendation(numbers):
         get_latest_round(),
         datetime.date.today().isoformat(),
         ','.join(map(str, numbers)),
-        '낙첨'
+        '미추첨'
     ))
     conn.commit()
     conn.close()
@@ -24,10 +24,49 @@ def get_recommendations():
     c.execute('SELECT id, round, date, numbers, grade FROM recommendations ORDER BY id DESC')
     rows = c.fetchall()
     conn.close()
-    return [
-        {'id': row[0], 'round': row[1], 'date': row[2], 'numbers': row[3], 'grade': row[4]}
-        for row in rows
-    ]
+
+    today = datetime.datetime.now()
+    updated_rows = []
+
+    latest_winning = get_latest_winning_info()
+    winning_date = datetime.datetime.strptime(latest_winning['date'], '%Y-%m-%d') if latest_winning else None
+    winning_numbers = list(map(int, latest_winning['numbers'].split(','))) if latest_winning else []
+    bonus_number = int(latest_winning['bonus']) if latest_winning else None
+    cutoff_time = datetime.time(21, 0)
+
+    for row in rows:
+        rec_id, round_num, date_str, numbers_str, grade = row
+        rec_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        rec_numbers = list(map(int, numbers_str.split(',')))
+
+        # 기준: 추첨일 전이거나 토요일 21시 이전이면 '미추첨'
+        if winning_date and today < datetime.datetime.combine(winning_date.date(), cutoff_time):
+            grade = '미추첨'
+        else:
+            match_count = len(set(rec_numbers) & set(winning_numbers))
+            has_bonus = bonus_number in rec_numbers
+            if match_count == 6:
+                grade = '1등'
+            elif match_count == 5 and has_bonus:
+                grade = '2등'
+            elif match_count == 5:
+                grade = '3등'
+            elif match_count == 4:
+                grade = '4등'
+            elif match_count == 3:
+                grade = '5등'
+            else:
+                grade = '낙첨'
+
+        updated_rows.append({
+            'id': rec_id,
+            'round': round_num,
+            'date': date_str,
+            'numbers': numbers_str,
+            'grade': grade
+        })
+
+    return updated_rows
 
 def get_latest_winning_info():
     conn = sqlite3.connect(DB_NAME)
@@ -75,7 +114,6 @@ def insert_winning_number(round_num, date, numbers, bonus, total_prize, winner_c
     conn.close()
 
 def get_number_frequencies(limit=10):
-    """최근 limit 회차의 번호 출현 빈도"""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute(f"SELECT numbers FROM winning_numbers ORDER BY round DESC LIMIT {limit}")
@@ -90,7 +128,6 @@ def get_number_frequencies(limit=10):
     return freq
 
 def get_recent_numbers(limit=10):
-    """최근 limit 회차 번호들을 모두 모아서 리스트 반환"""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute(f"SELECT numbers FROM winning_numbers ORDER BY round DESC LIMIT {limit}")
@@ -103,7 +140,6 @@ def get_recent_numbers(limit=10):
     return numbers
 
 def get_recent_winning_numbers(limit=10):
-    """최근 limit 회차 당첨번호를 리스트 of 리스트 형태로 반환"""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute(f"SELECT numbers FROM winning_numbers ORDER BY round DESC LIMIT {limit}")

@@ -1,12 +1,8 @@
-import os
 import sqlite3
 import datetime
 
-# 실행 환경에 따라 DB 경로 설정
-if os.getenv("RENDER") == "true":
-    DB_NAME = '/mnt/data/lotto.db'
-else:
-    DB_NAME = 'lotto.db'  # 로컬용
+# Render 호환을 위한 DB 경로 수정 (상대 경로로 설정)
+DB_NAME = 'lotto.db'
 
 def save_recommendation(numbers):
     conn = sqlite3.connect(DB_NAME)
@@ -151,6 +147,7 @@ def get_recent_winning_numbers(limit=10):
         [int(n) for n in row[0].split(',')]
         for row in rows
     ]
+
 
 
 

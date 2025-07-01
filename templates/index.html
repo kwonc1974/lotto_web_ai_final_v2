@@ -122,6 +122,20 @@
     }
 
     function generate() {
+      const now = new Date();
+      const day = now.getDay(); // 0=일, 6=토
+      const hour = now.getHours();
+
+      // 추천 제한 조건: 일요일 또는 토요일 21시 이후
+      if (day === 0 || (day === 6 && hour >= 21)) {
+        alert(
+          "🛑 브레이크 타임!\n" +
+          "로또번호 추천은 월~토요일 밤 9시 이전까지만 가능해요.\n" +
+          "월요일에 다시 오세요~ 😊"
+        );
+        return;
+      }
+
       const hybridCount = parseInt(hybridSelect.value);
       const smartCount = parseInt(smartSelect.value);
       const total = hybridCount + smartCount;
@@ -134,6 +148,7 @@
       fetch(`/generate?hybrid=${hybridCount}&smart=${smartCount}`)
         .then(res => res.json())
         .then(data => {
+          // 결과 표시
           const resultDiv = document.getElementById('result');
           resultDiv.innerHTML = '';
           data.forEach(line => {
@@ -147,7 +162,8 @@
             });
             resultDiv.appendChild(row);
           });
-          drawInfoDiv.textContent = `최신 회차 기준 추천 (${new Date().toISOString().slice(0,10)})`;
+          // 최신 회차 기준 표시 (날짜 대신)
+          drawInfoDiv.textContent = '최신 회차 기준 추천';
         });
     }
 
@@ -160,6 +176,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 

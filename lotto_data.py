@@ -1,16 +1,22 @@
+import os
 import sqlite3
 import datetime
 
-DB_NAME = 'lotto.db'
+# 실행 환경에 따라 DB 경로 설정
+if os.getenv("RENDER") == "true":
+    DB_NAME = '/mnt/data/lotto.db'
+else:
+    DB_NAME = 'lotto.db'  # 로컬용
 
 def save_recommendation(numbers):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
+    next_round = get_latest_round() + 1
     c.execute('''
         INSERT INTO recommendations (round, date, numbers, grade)
         VALUES (?, ?, ?, ?)
     ''', (
-        get_latest_round() + 1,
+        next_round,
         datetime.date.today().isoformat(),
         ','.join(map(str, numbers)),
         '미추첨'
@@ -25,32 +31,19 @@ def get_recommendations():
     rows = c.fetchall()
     conn.close()
 
-    today = datetime.datetime.now()
+    latest = get_latest_winning_info()
+    latest_round = latest['round'] if latest else 0
+    winning_numbers = list(map(int, latest['numbers'].split(','))) if latest else []
+    bonus_number = int(latest['bonus']) if latest else None
+
     updated_rows = []
 
-    latest_winning = get_latest_winning_info()
-    winning_date = datetime.datetime.strptime(latest_winning['date'], '%Y-%m-%d') if latest_winning else None
-    winning_numbers = list(map(int, latest_winning['numbers'].split(','))) if latest_winning else []
-    bonus_number = int(latest_winning['bonus']) if latest_winning else None
-    cutoff_time = datetime.time(21, 0)
-
-    # 이번 주 기준 일요일 21시 계산
-    this_week_sunday_21 = (today - datetime.timedelta(days=today.weekday() + 1))
-    this_week_sunday_21 = this_week_sunday_21.replace(hour=21, minute=0, second=0, microsecond=0)
-
     for row in rows:
-        rec_id, round_num, date_str, numbers_str, grade = row
-        rec_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        rec_id, round_num, date_str, numbers_str, _ = row
         rec_numbers = list(map(int, numbers_str.split(',')))
 
-        if not winning_date:
+        if round_num > latest_round:
             grade = '미추첨'
-        elif today < datetime.datetime.combine(winning_date.date(), cutoff_time):
-            grade = '미추첨'
-        elif today.weekday() == 6 and today.time() >= cutoff_time:  # 일요일 21시 이후
-            grade = '미추첨'  # 등수 판단 안함
-        elif today > this_week_sunday_21:  # 월~토 이후, 이미 일요일 21시 지나면
-            grade = '미추첨'  # 새 회차를 향하는 추천은 항상 미추첨으로 유지
         else:
             match_count = len(set(rec_numbers) & set(winning_numbers))
             has_bonus = bonus_number in rec_numbers

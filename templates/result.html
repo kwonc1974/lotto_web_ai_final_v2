@@ -56,6 +56,11 @@
       padding: 10px 15px;
       margin: 10px;
     }
+    .empty {
+      margin-top: 30px;
+      color: #888;
+      font-size: 1.1em;
+    }
   </style>
 </head>
 <body>
@@ -80,11 +85,12 @@
   <p>당첨번호 정보가 없습니다.</p>
   {% endif %}
 
+  {% if results and results|length > 0 %}
   <table>
     <thead>
       <tr>
         <th>#</th>
-        <th>추천 날짜</th>
+        <th>추천 회차</th>
         <th>추천 번호</th>
         <th>등수</th>
       </tr>
@@ -93,13 +99,16 @@
       {% for r in results %}
       <tr>
         <td>추천 #{{ loop.index }}</td>
-        <td>{{ r.date }}</td>
+        <td>{{ r.round }}회차</td>
         <td>{{ r.numbers }}</td>
         <td>{{ r.grade }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  {% else %}
+  <div class="empty">아직 추천 기록이 없습니다. 🎱</div>
+  {% endif %}
 
   <div>
     <button onclick="location.href='/'">추천 페이지로 돌아가기</button>
@@ -120,6 +129,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 

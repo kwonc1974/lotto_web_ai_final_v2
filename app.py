@@ -1,19 +1,19 @@
 from flask import Flask, render_template, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from api_winning import fetch_and_store_winning
-from lotto_data import get_latest_winning_info, get_recommendations, reset_db
+from lotto_data import get_latest_winning_info, get_recommendations, reset_db, save_recommendation
 from hybrid_generator import generate_hybrid_numbers
 from smart_generator import generate_weighted_numbers
-from lotto_data import save_recommendation
 import datetime
 
 app = Flask(__name__)
 
+# 단위 필터 등록
 def humanize_money(value):
     try:
         value = int(value)
         if value >= 10**8:
-            return f"{value / 10**8:.1f}개"
+            return f"{value / 10**8:.1f}억"
         elif value >= 10**4:
             return f"{value / 10**4:.1f}만"
         else:
@@ -23,16 +23,19 @@ def humanize_money(value):
 
 app.jinja_env.filters['humanize_money'] = humanize_money
 
+# 홈 페이지
 @app.route('/')
 def index():
     return render_template("index.html")
 
+# 결과 페이지
 @app.route('/result')
 def result():
     win_info = get_latest_winning_info()
     results = get_recommendations()
     return render_template("result.html", win_info=win_info, results=results)
 
+# DB 초기화 (비밀번호 체크)
 @app.route('/reset_db')
 def reset():
     pw = request.args.get('pw', '')
@@ -41,6 +44,7 @@ def reset():
     reset_db()
     return jsonify({"success": True, "message": "✅ DB가 초기화되었습니다."})
 
+# 추천 번호 생성
 @app.route('/generate')
 def generate():
     now = datetime.datetime.now()
@@ -63,6 +67,7 @@ def generate():
 
     return jsonify(results)
 
+# 당첨번호 수동 업데이트 API
 @app.route('/update_winning')
 def update_winning():
     try:
@@ -73,17 +78,19 @@ def update_winning():
     except Exception as e:
         return jsonify({"success": False, "message": f"업데이트 실패: {str(e)}"})
 
-# 기존 로컬 테스트용 스케줄러 (Render에서는 작동안 함)
+# 로컬 테스트용 스케줄러 (Render에서는 미작동)
 def scheduled_job():
     latest = get_latest_winning_info()
     next_round = (latest['round'] + 1) if latest else 1
     print(f"스케줄러: {next_round}회 당첨번호 조회 시도")
     fetch_and_store_winning(next_round)
 
+# 로컬에서만 작동하는 스케줄러 (Render 배포용은 cron-job.org 사용)
 scheduler = BackgroundScheduler()
 scheduler.add_job(scheduled_job, 'cron', day_of_week='sat', hour=21, minute=0)
 scheduler.start()
 
+# 실행
 if __name__ == '__main__':
     app.run(debug=True)
 

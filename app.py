@@ -5,6 +5,7 @@ from lotto_data import get_latest_winning_info, get_recommendations, reset_db
 from hybrid_generator import generate_hybrid_numbers
 from smart_generator import generate_weighted_numbers
 from lotto_data import save_recommendation
+import datetime
 
 app = Flask(__name__)
 
@@ -42,6 +43,10 @@ def reset():
 
 @app.route('/generate')
 def generate():
+    now = datetime.datetime.now()
+    if now.weekday() == 6 or (now.weekday() == 5 and now.hour >= 21):
+        return jsonify({"error": "❌ 추천은 월~토요일 21시 이전까지만 가능합니다."})
+
     hybrid_count = int(request.args.get('hybrid', 0))
     smart_count = int(request.args.get('smart', 0))
 
@@ -58,6 +63,17 @@ def generate():
 
     return jsonify(results)
 
+@app.route('/update_winning')
+def update_winning():
+    try:
+        latest = get_latest_winning_info()
+        next_round = (latest['round'] + 1) if latest else 1
+        fetch_and_store_winning(next_round)
+        return jsonify({"success": True, "message": f"{next_round}회차 당첨번호 업데이트 완료"})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"업데이트 실패: {str(e)}"})
+
+# 기존 로컬 테스트용 스케줄러 (Render에서는 작동안 함)
 def scheduled_job():
     latest = get_latest_winning_info()
     next_round = (latest['round'] + 1) if latest else 1
@@ -70,6 +86,8 @@ scheduler.start()
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
 
 
 

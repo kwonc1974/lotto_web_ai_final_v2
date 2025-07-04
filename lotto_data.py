@@ -1,24 +1,32 @@
 import sqlite3
 import datetime
+import os  # 🔍 DB 경로 추적용
 
 # Render 호환을 위한 DB 경로 수정 (상대 경로로 설정)
 DB_NAME = 'lotto.db'
 
 def save_recommendation(numbers):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    next_round = get_latest_round() + 1
-    c.execute('''
-        INSERT INTO recommendations (round, date, numbers, grade)
-        VALUES (?, ?, ?, ?)
-    ''', (
-        next_round,
-        datetime.date.today().isoformat(),
-        ','.join(map(str, numbers)),
-        '미추첨'
-    ))
-    conn.commit()
-    conn.close()
+    print("[DEBUG] 현재 DB 경로:", os.path.abspath(DB_NAME))
+    print("[DEBUG] DB 존재 여부:", os.path.exists(DB_NAME))
+    print("[DEBUG] 추천번호 저장 시도:", numbers)
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        next_round = get_latest_round() + 1
+        c.execute('''
+            INSERT INTO recommendations (round, date, numbers, grade)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            next_round,
+            datetime.date.today().isoformat(),
+            ','.join(map(str, numbers)),
+            '미추첨'
+        ))
+        conn.commit()
+        conn.close()
+        print("[DEBUG] 저장 성공: round=", next_round)
+    except Exception as e:
+        print("[ERROR] 저장 실패:", e)
 
 def get_recommendations():
     conn = sqlite3.connect(DB_NAME)
@@ -147,6 +155,7 @@ def get_recent_winning_numbers(limit=10):
         [int(n) for n in row[0].split(',')]
         for row in rows
     ]
+
 
 
 

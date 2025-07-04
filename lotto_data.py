@@ -5,13 +5,16 @@ import requests
 from bs4 import BeautifulSoup
 
 # ✅ 절대 경로 기반 DB 위치 지정 (Render 대응)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_NAME = os.path.join(BASE_DIR, 'lotto.db')
+
+print("[DEBUG] DB 경로:", DB_NAME)
+print("[DEBUG] DB 존재 여부:", os.path.exists(DB_NAME))
 
 
 # ✅ DB 초기화 함수 (app.py에서 자동 호출됨)
 def init_db():
-    if not os.path.exists(DB_NAME):
+    try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute('''
@@ -36,7 +39,9 @@ def init_db():
         ''')
         conn.commit()
         conn.close()
-        print("[DB] lotto.db가 생성되었습니다.")
+        print("[DB] lotto.db 생성/초기화 완료")
+    except Exception as e:
+        print("[에러] DB 초기화 실패:", e)
 
 
 # 최신 당첨 정보 가져오기

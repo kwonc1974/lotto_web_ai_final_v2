@@ -1,14 +1,53 @@
 import sqlite3
 import datetime
-import os  # 🔍 DB 경로 추적용
+import os
 
-# ✅ Render 배포 서버에서는 이 경로가 유지되는 영구 저장소
+# ✅ Render 서버에 영구 저장되는 경로
 DB_NAME = '/mnt/data/lotto.db'
 
+# ✅ DB 및 테이블 초기화 함수 (없으면 자동 생성)
+def init_database():
+    if not os.path.exists(DB_NAME):
+        print("[⚙️] DB 파일이 존재하지 않음. 새로 생성합니다.")
+    else:
+        print("[✅] DB 파일 존재 확인:", DB_NAME)
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    
+    # recommendations 테이블 생성
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS recommendations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            round INTEGER,
+            date TEXT,
+            numbers TEXT,
+            grade TEXT
+        )
+    ''')
+
+    # winning_numbers 테이블 생성
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS winning_numbers (
+            round INTEGER PRIMARY KEY,
+            date TEXT,
+            numbers TEXT,
+            bonus_number INTEGER,
+            total_prize TEXT,
+            winner_count TEXT,
+            per_person TEXT
+        )
+    ''')
+
+    conn.commit()
+    conn.close()
+    print("[✔️] DB 및 테이블 초기화 완료")
+
+# 앱 구동 시 초기화 시도
+init_database()
+
 def save_recommendation(numbers):
-    print("[DEBUG] 현재 DB 경로:", os.path.abspath(DB_NAME))
-    print("[DEBUG] DB 존재 여부:", os.path.exists(DB_NAME))
-    print("[DEBUG] 추천번호 저장 시도:", numbers)
+    print("[DEBUG] 저장 시도 - 추천 번호:", numbers)
     try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
@@ -24,9 +63,9 @@ def save_recommendation(numbers):
         ))
         conn.commit()
         conn.close()
-        print("[DEBUG] 저장 성공: round=", next_round)
+        print(f"[✅] 추천번호 저장 완료 (회차: {next_round})")
     except Exception as e:
-        print("[ERROR] 저장 실패:", e)
+        print("[❌] 추천번호 저장 실패:", e)
 
 def get_recommendations():
     conn = sqlite3.connect(DB_NAME)
@@ -106,7 +145,7 @@ def reset_db():
     c.execute('DELETE FROM recommendations')
     conn.commit()
     conn.close()
-    print("추천 기록 초기화 완료")
+    print("[⚠️] 추천 기록 초기화 완료")
 
 def insert_winning_number(round_num, date, numbers, bonus, total_prize, winner_count, per_person):
     conn = sqlite3.connect(DB_NAME)

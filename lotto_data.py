@@ -2,8 +2,8 @@ import sqlite3
 import datetime
 import os  # 🔍 DB 경로 추적용
 
-# Render 호환을 위한 DB 경로 수정 (상대 경로로 설정)
-DB_NAME = 'lotto.db'
+# ✅ Render 배포 서버에서는 이 경로가 유지되는 영구 저장소
+DB_NAME = '/mnt/data/lotto.db'
 
 def save_recommendation(numbers):
     print("[DEBUG] 현재 DB 경로:", os.path.abspath(DB_NAME))

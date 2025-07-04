@@ -4,12 +4,15 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 
-# ✅ 절대 경로 기반 DB 위치 지정 (Render 대응)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_NAME = os.path.join(BASE_DIR, 'lotto.db')
+# ✅ Render 환경은 /data 디렉토리만 쓰기 가능
+if os.getenv('RENDER'):
+    DB_NAME = '/data/lotto.db'
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DB_NAME = os.path.join(BASE_DIR, 'lotto.db')
 
 
-# ✅ DB 초기화 함수 (app.py에서 자동 호출됨)
+# ✅ DB 초기화 함수
 def init_db():
     if not os.path.exists(DB_NAME):
         conn = sqlite3.connect(DB_NAME)
@@ -39,7 +42,7 @@ def init_db():
         print("[DB] lotto.db가 생성되었습니다.")
 
 
-# 최신 당첨 정보 가져오기
+# ✅ 최신 당첨 정보 가져오기
 def get_latest_winning_info():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -56,7 +59,7 @@ def get_latest_winning_info():
     return None
 
 
-# 추천 번호 저장
+# ✅ 추천 번호 저장
 def save_recommendation(numbers):
     today = datetime.date.today().isoformat()
     latest = get_latest_winning_info()
@@ -71,7 +74,7 @@ def save_recommendation(numbers):
     conn.close()
 
 
-# 추천 기록 조회
+# ✅ 추천 기록 조회
 def get_recommendations():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -91,7 +94,7 @@ def get_recommendations():
     return result
 
 
-# 당첨 번호 저장
+# ✅ 당첨 번호 저장
 def save_winning_numbers(round_num, date_str, numbers, bonus):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -103,7 +106,7 @@ def save_winning_numbers(round_num, date_str, numbers, bonus):
     conn.close()
 
 
-# 웹에서 당첨 번호 가져오기
+# ✅ 웹에서 당첨 번호 가져오기
 def fetch_latest_winning_numbers():
     url = 'https://dhlottery.co.kr/gameResult.do?method=byWin'
     response = requests.get(url)
@@ -126,7 +129,7 @@ def fetch_latest_winning_numbers():
     }
 
 
-# DB 초기화 (비밀번호 전용)
+# ✅ DB 초기화 (비밀번호로만 접근)
 def reset_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -134,7 +137,6 @@ def reset_db():
     c.execute('DELETE FROM recommendations')
     conn.commit()
     conn.close()
-
 
 
 
